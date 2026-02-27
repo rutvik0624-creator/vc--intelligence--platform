@@ -8,6 +8,7 @@ import { SavedSearches } from './pages/SavedSearches';
 import { Login } from './pages/Login';
 import { Analytics } from './pages/Analytics';
 import { MyProfile } from './pages/MyProfile';
+import { Spreadsheet } from './pages/Spreadsheet';
 import { useAppStore, UserRole } from './hooks/useAppStore';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: UserRole[] }) {
@@ -74,6 +75,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <SavedSearches />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="spreadsheet" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Spreadsheet />
               </ProtectedRoute>
             } 
           />

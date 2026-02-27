@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Building2, List, Search, Bookmark, Menu, X, BarChart3, LogOut, Shield, LineChart, User } from "lucide-react";
+import { Building2, List, Search, Bookmark, Menu, X, BarChart3, LogOut, Shield, LineChart, User, FileSpreadsheet } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAppStore } from "../../hooks/useAppStore";
 
@@ -14,6 +14,7 @@ export function Layout() {
     { to: "/companies", icon: Building2, label: "Companies", roles: ['admin', 'analyst', 'company', 'user'] },
     { to: "/lists", icon: List, label: "Lists", roles: ['admin'] },
     { to: "/saved", icon: Bookmark, label: "Saved Searches", roles: ['admin'] },
+    { to: "/spreadsheet", icon: FileSpreadsheet, label: "Master Database", roles: ['admin'] },
     { to: "/my-profile", icon: User, label: "My Profile", roles: ['company', 'user'] },
   ].filter(item => item.roles.includes(user?.role || 'user'));
 
