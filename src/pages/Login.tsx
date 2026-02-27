@@ -23,6 +23,7 @@ export function Login() {
   const [publicRole, setPublicRole] = useState<'company' | 'user'>('company');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
   const { login } = useAppStore();
   const navigate = useNavigate();
 
@@ -35,30 +36,32 @@ export function Login() {
     setTimeout(() => {
       setIsLoading(false);
       
-      const isAdmin = ADMIN_CREDENTIALS.find(c => c.email === email && c.password === password);
-      const isAnalyst = ANALYST_CREDENTIALS.find(c => c.email === email && c.password === password);
+      if (!isSignUp) {
+        const isAdmin = ADMIN_CREDENTIALS.find(c => c.email === email && c.password === password);
+        const isAnalyst = ANALYST_CREDENTIALS.find(c => c.email === email && c.password === password);
 
-      if (isAdmin) {
-        login(email, 'admin');
-        navigate('/analytics');
-        return;
+        if (isAdmin) {
+          login(email, 'admin');
+          navigate('/analytics');
+          return;
+        }
+        
+        if (isAnalyst) {
+          login(email, 'analyst');
+          navigate('/analytics');
+          return;
+        }
+
+        const isKnownAdminEmail = ADMIN_CREDENTIALS.some(c => c.email === email);
+        const isKnownAnalystEmail = ANALYST_CREDENTIALS.some(c => c.email === email);
+
+        if (isKnownAdminEmail || isKnownAnalystEmail) {
+          setError('Invalid password for internal account.');
+          return;
+        }
       }
-      
-      if (isAnalyst) {
-        login(email, 'analyst');
-        navigate('/analytics');
-        return;
-      }
 
-      const isKnownAdminEmail = ADMIN_CREDENTIALS.some(c => c.email === email);
-      const isKnownAnalystEmail = ANALYST_CREDENTIALS.some(c => c.email === email);
-
-      if (isKnownAdminEmail || isKnownAnalystEmail) {
-        setError('Invalid password for internal account.');
-        return;
-      }
-
-      // Public login
+      // Public login / sign up
       login(email || `${publicRole}@example.com`, publicRole);
       if (publicRole === 'company') {
         navigate('/my-profile');
@@ -112,7 +115,7 @@ export function Login() {
       </div>
 
       {/* Right side - Login Form */}
-      <div className="flex-1 flex flex-col justify-center items-center p-8 sm:p-12 lg:p-16">
+      <div className="flex-1 flex flex-col justify-center items-center p-8 sm:p-12 lg:p-16 relative">
         <div className="w-full max-w-sm space-y-8">
           <div className="text-center lg:text-left">
             <div className="lg:hidden flex justify-center mb-6">
@@ -120,8 +123,12 @@ export function Login() {
                 <Search className="w-6 h-6 text-white" />
               </div>
             </div>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Welcome back</h2>
-            <p className="text-slate-500 mt-2">Sign in to your VC Intel account</p>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+              {isSignUp ? 'Create an account' : 'Welcome back'}
+            </h2>
+            <p className="text-slate-500 mt-2">
+              {isSignUp ? 'Join VC Intel today' : 'Sign in to your VC Intel account'}
+            </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
@@ -157,6 +164,35 @@ export function Login() {
             </div>
 
             <div className="space-y-4">
+              {isSignUp && publicRole === 'company' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 block">Company Name</label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Input
+                      type="text"
+                      required
+                      placeholder="Your Startup Inc."
+                      className="pl-10 h-11 bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              )}
+              {isSignUp && publicRole === 'user' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700 block">Full Name</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Input
+                      type="text"
+                      required
+                      placeholder="John Doe"
+                      className="pl-10 h-11 bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 block">Email address</label>
                 <div className="relative">
@@ -175,9 +211,11 @@ export function Login() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-sm font-medium text-slate-700 block">Password</label>
-                  <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
-                    Forgot password?
-                  </a>
+                  {!isSignUp && (
+                    <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                      Forgot password?
+                    </a>
+                  )}
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -206,18 +244,29 @@ export function Login() {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  Sign in <ArrowRight className="w-4 h-4" />
+                  {isSignUp ? 'Create account' : 'Sign in'} <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </Button>
           </form>
 
           <div className="text-center text-sm text-slate-500">
-            Don't have an account?{' '}
-            <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Sign up
-            </a>
+            {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+            <button 
+              type="button"
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError('');
+              }}
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              {isSignUp ? 'Sign in' : 'Sign up'}
+            </button>
           </div>
+        </div>
+        
+        <div className="absolute bottom-6 text-center text-sm text-slate-400">
+          Built by Rutvik
         </div>
       </div>
     </div>

@@ -104,8 +104,13 @@ export function Layout() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto w-full pt-16 md:pt-0 bg-gradient-to-br from-slate-50 to-slate-100/80">
-        <Outlet />
+      <main className="flex-1 overflow-auto w-full pt-16 md:pt-0 bg-gradient-to-br from-slate-50 to-slate-100/80 flex flex-col">
+        <div className="flex-1">
+          <Outlet />
+        </div>
+        <footer className="py-4 text-center text-sm text-slate-500 border-t border-slate-200/60 bg-slate-50/50">
+          Built by Rutvik
+        </footer>
       </main>
     </div>
   );
