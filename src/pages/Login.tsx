@@ -3,26 +3,68 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore, UserRole } from '../hooks/useAppStore';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Search, Lock, Mail, ArrowRight, Shield, LineChart } from 'lucide-react';
+import { Search, Lock, Mail, ArrowRight, Building2, User } from 'lucide-react';
 import { cn } from '../lib/utils';
+
+const ADMIN_CREDENTIALS = [
+  { email: 'admin1@vc.com', password: 'adminpassword1' },
+  { email: 'admin2@vc.com', password: 'adminpassword2' }
+];
+
+const ANALYST_CREDENTIALS = [
+  { email: 'analyst1@vc.com', password: 'analystpassword1' },
+  { email: 'analyst2@vc.com', password: 'analystpassword2' },
+  { email: 'analyst3@vc.com', password: 'analystpassword3' }
+];
 
 export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('admin');
+  const [publicRole, setPublicRole] = useState<'company' | 'user'>('company');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAppStore();
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     
     // Simulate network delay
     setTimeout(() => {
       setIsLoading(false);
-      login(email || `${role}@vc.com`, role);
-      navigate('/analytics');
+      
+      const isAdmin = ADMIN_CREDENTIALS.find(c => c.email === email && c.password === password);
+      const isAnalyst = ANALYST_CREDENTIALS.find(c => c.email === email && c.password === password);
+
+      if (isAdmin) {
+        login(email, 'admin');
+        navigate('/analytics');
+        return;
+      }
+      
+      if (isAnalyst) {
+        login(email, 'analyst');
+        navigate('/analytics');
+        return;
+      }
+
+      const isKnownAdminEmail = ADMIN_CREDENTIALS.some(c => c.email === email);
+      const isKnownAnalystEmail = ANALYST_CREDENTIALS.some(c => c.email === email);
+
+      if (isKnownAdminEmail || isKnownAnalystEmail) {
+        setError('Invalid password for internal account.');
+        return;
+      }
+
+      // Public login
+      login(email || `${publicRole}@example.com`, publicRole);
+      if (publicRole === 'company') {
+        navigate('/my-profile');
+      } else {
+        navigate('/companies');
+      }
     }, 800);
   };
 
@@ -84,33 +126,33 @@ export function Login() {
 
           <form onSubmit={handleLogin} className="space-y-6">
             
-            {/* Role Selector */}
+            {/* Public Role Selector */}
             <div className="bg-slate-100 p-1 rounded-lg flex">
               <button
                 type="button"
-                onClick={() => setRole('admin')}
+                onClick={() => setPublicRole('company')}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-md transition-all",
-                  role === 'admin' 
+                  publicRole === 'company' 
                     ? "bg-white text-indigo-600 shadow-sm" 
                     : "text-slate-500 hover:text-slate-700"
                 )}
               >
-                <Shield className="w-4 h-4" />
-                Admin
+                <Building2 className="w-4 h-4" />
+                Company
               </button>
               <button
                 type="button"
-                onClick={() => setRole('analyst')}
+                onClick={() => setPublicRole('user')}
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium rounded-md transition-all",
-                  role === 'analyst' 
+                  publicRole === 'user' 
                     ? "bg-white text-indigo-600 shadow-sm" 
                     : "text-slate-500 hover:text-slate-700"
                 )}
               >
-                <LineChart className="w-4 h-4" />
-                Analyst
+                <User className="w-4 h-4" />
+                User
               </button>
             </div>
 
@@ -122,7 +164,7 @@ export function Login() {
                   <Input
                     type="email"
                     required
-                    placeholder={role === 'admin' ? "admin@fund.vc" : "analyst@fund.vc"}
+                    placeholder={publicRole === 'company' ? "founder@startup.com" : "user@example.com"}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 h-11 bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
@@ -145,9 +187,13 @@ export function Login() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 h-11 bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
+                    className={cn(
+                      "pl-10 h-11 bg-white border-slate-200 focus:border-indigo-500 focus:ring-indigo-500",
+                      error && "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    )}
                   />
                 </div>
+                {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
               </div>
             </div>
 
@@ -160,11 +206,18 @@ export function Login() {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  Sign in as {role === 'admin' ? 'Admin' : 'Analyst'} <ArrowRight className="w-4 h-4" />
+                  Sign in <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </Button>
           </form>
+
+          <div className="text-center text-sm text-slate-500">
+            Don't have an account?{' '}
+            <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+              Sign up
+            </a>
+          </div>
         </div>
       </div>
     </div>

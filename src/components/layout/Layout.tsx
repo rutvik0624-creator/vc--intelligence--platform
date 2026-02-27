@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Building2, List, Search, Bookmark, Menu, X, BarChart3, LogOut, Shield, LineChart } from "lucide-react";
+import { Building2, List, Search, Bookmark, Menu, X, BarChart3, LogOut, Shield, LineChart, User } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { useAppStore } from "../../hooks/useAppStore";
 
@@ -10,11 +10,12 @@ export function Layout() {
   const navigate = useNavigate();
 
   const navItems = [
-    { to: "/analytics", icon: BarChart3, label: "Analytics Dashboard", roles: ['admin', 'analyst'] },
-    { to: "/companies", icon: Building2, label: "Companies", roles: ['admin', 'analyst'] },
+    { to: "/analytics", icon: BarChart3, label: "Analytics Dashboard", roles: ['admin', 'analyst', 'company', 'user'] },
+    { to: "/companies", icon: Building2, label: "Companies", roles: ['admin', 'analyst', 'company', 'user'] },
     { to: "/lists", icon: List, label: "Lists", roles: ['admin'] },
     { to: "/saved", icon: Bookmark, label: "Saved Searches", roles: ['admin'] },
-  ].filter(item => item.roles.includes(user?.role || 'analyst'));
+    { to: "/my-profile", icon: User, label: "My Profile", roles: ['company', 'user'] },
+  ].filter(item => item.roles.includes(user?.role || 'user'));
 
   const handleLogout = () => {
     logout();
@@ -76,7 +77,7 @@ export function Layout() {
           <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center text-sm font-bold text-indigo-700 shadow-inner">
-                {user?.role === 'admin' ? <Shield className="w-4 h-4" /> : <LineChart className="w-4 h-4" />}
+                {user?.role === 'admin' ? <Shield className="w-4 h-4" /> : user?.role === 'analyst' ? <LineChart className="w-4 h-4" /> : user?.role === 'company' ? <Building2 className="w-4 h-4" /> : <User className="w-4 h-4" />}
               </div>
               <div>
                 <div className="text-sm font-medium text-slate-700 capitalize">{user?.role || 'User'}</div>

@@ -1,6 +1,6 @@
 import { useLocalStorage } from './useLocalStorage';
 
-export type UserRole = 'admin' | 'analyst';
+export type UserRole = 'admin' | 'analyst' | 'company' | 'user';
 
 export interface User {
   email: string;

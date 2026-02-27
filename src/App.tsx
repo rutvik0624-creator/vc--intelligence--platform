@@ -7,6 +7,7 @@ import { Lists } from './pages/Lists';
 import { SavedSearches } from './pages/SavedSearches';
 import { Login } from './pages/Login';
 import { Analytics } from './pages/Analytics';
+import { MyProfile } from './pages/MyProfile';
 import { useAppStore, UserRole } from './hooks/useAppStore';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: UserRole[] }) {
@@ -15,9 +16,18 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode,
     return <Navigate to="/login" replace />;
   }
   if (allowedRoles && !allowedRoles.includes(user.role)) {
+    if (user.role === 'company') return <Navigate to="/my-profile" replace />;
+    if (user.role === 'user') return <Navigate to="/companies" replace />;
     return <Navigate to="/analytics" replace />;
   }
   return <>{children}</>;
+}
+
+function IndexRedirect() {
+  const { user } = useAppStore();
+  if (user?.role === 'company') return <Navigate to="/my-profile" replace />;
+  if (user?.role === 'user') return <Navigate to="/companies" replace />;
+  return <Navigate to="/analytics" replace />;
 }
 
 export default function App() {
@@ -26,10 +36,31 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-          <Route index element={<Navigate to="/analytics" replace />} />
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="companies" element={<Companies />} />
-          <Route path="companies/:id" element={<CompanyDetail />} />
+          <Route index element={<IndexRedirect />} />
+          <Route 
+            path="analytics" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'analyst', 'company', 'user']}>
+                <Analytics />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="companies" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'analyst', 'company', 'user']}>
+                <Companies />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="companies/:id" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'analyst', 'company', 'user']}>
+                <CompanyDetail />
+              </ProtectedRoute>
+            } 
+          />
           <Route 
             path="lists" 
             element={
@@ -43,6 +74,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <SavedSearches />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="my-profile" 
+            element={
+              <ProtectedRoute allowedRoles={['company', 'user']}>
+                <MyProfile />
               </ProtectedRoute>
             } 
           />
