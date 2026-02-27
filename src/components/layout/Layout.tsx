@@ -1,0 +1,90 @@
+import { useState } from "react";
+import { NavLink, Outlet } from "react-router-dom";
+import { Building2, List, Search, Bookmark, Menu, X } from "lucide-react";
+import { cn } from "../../lib/utils";
+
+export function Layout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const navItems = [
+    { to: "/companies", icon: Building2, label: "Companies" },
+    { to: "/lists", icon: List, label: "Lists" },
+    { to: "/saved", icon: Bookmark, label: "Saved Searches" },
+  ];
+
+  return (
+    <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
+      {/* Mobile Header */}
+      <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 z-30 absolute top-0 w-full shadow-sm">
+        <h1 className="text-lg font-bold tracking-tight flex items-center gap-2 text-slate-900">
+          <div className="bg-indigo-600 p-1 rounded-md">
+            <Search className="w-4 h-4 text-white" />
+          </div>
+          VC Intel
+        </h1>
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-md transition-colors">
+          {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-20 w-52 md:w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0 shadow-xl md:shadow-none",
+          isSidebarOpen ? "translate-x-0 pt-16 md:pt-0" : "-translate-x-full"
+        )}
+      >
+        <div className="hidden md:flex p-6 items-center gap-3">
+          <div className="bg-indigo-600 p-2 rounded-xl shadow-sm shadow-indigo-200">
+            <Search className="w-5 h-5 text-white" />
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+            VC Intel
+          </h1>
+        </div>
+        
+        <nav className="flex-1 px-4 py-4 md:py-0 space-y-1.5 overflow-y-auto">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              onClick={() => setIsSidebarOpen(false)}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                  isActive
+                    ? "bg-indigo-50 text-indigo-700 shadow-sm shadow-indigo-100/50"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                )
+              }
+            >
+              <item.icon className={cn("w-4 h-4", "opacity-80")} />
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="p-4 border-t border-slate-100">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center text-sm font-bold text-indigo-700 shadow-inner">
+              VI
+            </div>
+            <div className="text-sm font-medium text-slate-700">VC Investor</div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/30 z-10 md:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto w-full pt-16 md:pt-0 bg-gradient-to-br from-slate-50 to-slate-100/80">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
