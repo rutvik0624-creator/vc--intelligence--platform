@@ -1,16 +1,25 @@
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
-import { Building2, List, Search, Bookmark, Menu, X } from "lucide-react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Building2, List, Search, Bookmark, Menu, X, BarChart3, LogOut, Shield, LineChart } from "lucide-react";
 import { cn } from "../../lib/utils";
+import { useAppStore } from "../../hooks/useAppStore";
 
 export function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { user, logout } = useAppStore();
+  const navigate = useNavigate();
 
   const navItems = [
-    { to: "/companies", icon: Building2, label: "Companies" },
-    { to: "/lists", icon: List, label: "Lists" },
-    { to: "/saved", icon: Bookmark, label: "Saved Searches" },
-  ];
+    { to: "/analytics", icon: BarChart3, label: "Analytics Dashboard", roles: ['admin', 'analyst'] },
+    { to: "/companies", icon: Building2, label: "Companies", roles: ['admin', 'analyst'] },
+    { to: "/lists", icon: List, label: "Lists", roles: ['admin'] },
+    { to: "/saved", icon: Bookmark, label: "Saved Searches", roles: ['admin'] },
+  ].filter(item => item.roles.includes(user?.role || 'analyst'));
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="flex h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
@@ -64,11 +73,23 @@ export function Layout() {
           ))}
         </nav>
         <div className="p-4 border-t border-slate-100">
-          <div className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center text-sm font-bold text-indigo-700 shadow-inner">
-              VI
+          <div className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer group">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 flex items-center justify-center text-sm font-bold text-indigo-700 shadow-inner">
+                {user?.role === 'admin' ? <Shield className="w-4 h-4" /> : <LineChart className="w-4 h-4" />}
+              </div>
+              <div>
+                <div className="text-sm font-medium text-slate-700 capitalize">{user?.role || 'User'}</div>
+                <div className="text-xs text-slate-500 truncate max-w-[100px]">{user?.email || 'user@vc.com'}</div>
+              </div>
             </div>
-            <div className="text-sm font-medium text-slate-700">VC Investor</div>
+            <button 
+              onClick={handleLogout}
+              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+              title="Sign out"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </aside>

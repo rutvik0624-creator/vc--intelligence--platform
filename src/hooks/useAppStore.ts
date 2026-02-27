@@ -1,5 +1,12 @@
 import { useLocalStorage } from './useLocalStorage';
 
+export type UserRole = 'admin' | 'analyst';
+
+export interface User {
+  email: string;
+  role: UserRole;
+}
+
 export interface List {
   id: string;
   name: string;
@@ -18,9 +25,13 @@ export interface SavedSearch {
 }
 
 export function useAppStore() {
+  const [user, setUser] = useLocalStorage<User | null>('vc-intel-user', null);
   const [lists, setLists] = useLocalStorage<List[]>('vc-intel-lists', []);
   const [savedSearches, setSavedSearches] = useLocalStorage<SavedSearch[]>('vc-intel-saved-searches', []);
   const [notes, setNotes] = useLocalStorage<Record<string, string>>('vc-intel-notes', {});
+
+  const login = (email: string, role: UserRole) => setUser({ email, role });
+  const logout = () => setUser(null);
 
   const addList = (name: string) => {
     const newList: List = {
@@ -72,6 +83,9 @@ export function useAppStore() {
   };
 
   return {
+    user,
+    login,
+    logout,
     lists,
     addList,
     deleteList,
