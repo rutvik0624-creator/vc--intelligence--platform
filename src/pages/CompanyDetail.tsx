@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { GoogleGenAI, Type } from '@google/genai';
 import { mockCompanies } from '../lib/data';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -52,18 +53,74 @@ export function CompanyDetail() {
     setIsEnriching(true);
     setEnrichError(null);
     try {
-      const response = await fetch('/api/enrich', {
+      // 1. Scrape website content via backend proxy
+      const scrapeResponse = await fetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: company.url, companyId: company.id }),
+        body: JSON.stringify({ url: company.url }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to enrich data');
+      if (!scrapeResponse.ok) {
+        const errorData = await scrapeResponse.json().catch(() => null);
+        throw new Error(errorData?.details || errorData?.error || 'Failed to scrape website');
       }
 
-      const data = await response.json();
-      setEnrichmentData(data);
+      const { text: textContent } = await scrapeResponse.json();
+
+      // 2. Call Gemini from frontend
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const prompt = `Analyze the following website content for a startup and extract key information for a venture capital investor.
+      
+Website Content:
+${textContent}
+
+If the content is empty or unreadable, do your best to infer based on the URL or provide a generic response indicating missing data.`;
+
+      const aiResponse = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              summary: {
+                type: Type.STRING,
+                description: "A 1-2 sentence summary of what the company does."
+              },
+              descriptionBullets: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: "3-5 bullet points detailing the product, market, or key value proposition."
+              },
+              keywords: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: "5-10 keywords relevant to the company's industry, technology, and business model."
+              },
+              signals: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING },
+                description: "2-4 potential positive or negative signals for an investor (e.g., 'Strong technical team', 'Crowded market')."
+              }
+            }
+          }
+        }
+      });
+
+      const resultText = aiResponse.text;
+      if (!resultText) {
+        throw new Error("No response from AI");
+      }
+
+      const parsedResult = JSON.parse(resultText);
+      
+      setEnrichmentData({
+        ...parsedResult,
+        sources: [
+          { url: company.url, timestamp: new Date().toISOString() }
+        ]
+      });
     } catch (error) {
       setEnrichError(error instanceof Error ? error.message : 'An unknown error occurred');
     } finally {
